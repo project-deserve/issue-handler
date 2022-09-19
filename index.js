@@ -20,7 +20,7 @@ const github = {
 
 try {
 	if (github.context.payload.issue) {
-		const issueId = github.context.payload.issue.id;	
+		const issueId = github.context.payload.issue.number;	
 		const formData = JSON.parse(core.getInput("form-data"));
 		console.log(`Issue: ${issueId}`);
 		
@@ -39,7 +39,7 @@ try {
 
 
 function updateHealthRecord(id, formData) {
-	const issueId = github.context.payload.issue.id;		
+	const issueId = github.context.payload.issue.number;		
 	const now = (new Date()).toISOString().split('T')[0];
 	const fileName = "Personal Health Records/" + id + "/readme.md";
 	const rawdata = fs.readFileSync(fileName, 'utf8');
@@ -56,11 +56,12 @@ function updateHealthRecord(id, formData) {
 	const info = formData["additional-information"].text;  	
 	const comm = formData["method-of-communication"].text; 
 	
-	const md = `<a href="https://github.com/project-deserve/project-deserve.github.io/issues/${issueId}">${now}</a>`	
-	const visit = `| ${md} | ${rsn} | ${cdn} | ${ill} | ${wgt} | ${hgt} | ${bp} | ${comm} | \n`;
+	const md = `<a href="https://github.com/project-deserve/clinic-alpha-one/issues/${issueId}">${now}</a>`	
+	const visit = `| ${md} | ${rsn} | ${cdn} | ${ill} | ${wgt} | ${hgt} | ${bp} | ${comm} |`;
 	
-	const readme = healthRecord[0].substring(0, healthRecord[0].length - 2) + visit + "\n# Illnesses" + healthRecord[1];
+	const readme = healthRecord[0].substring(0, healthRecord[0].length - 2) + "\n" + visit + "\n# Illnesses" + healthRecord[1];
 	core.setOutput("id", id);  	  
+	core.setOutput("type", "update");  	
 	fs.writeFileSync(fileName, readme);	
 }	
 
@@ -69,13 +70,13 @@ function createHeathRecord(formData) {
 	
 	const rootReadme = "Personal Health Records/readme.md";
 	const rawdata = fs.readFileSync(rootReadme, 'utf8');
-	const newData = rawdata.toString() + "* [" + id + "](./" + id + ")\n---"
+	const newData = rawdata.toString() + "\n* [" + id + "](./" + id + ")\n---"
 	fs.writeFileSync(rootReadme, newData);		
 	
 	const dirName = "Personal Health Records/" + id;	
 	const fileName = dirName + '/readme.md';		
 	const cd = (new Date()).toISOString().split('T')[0];
-	const em = formData["email"].text;
+	const em = formData["email-address"].text;
 	const dn = formData["display-name"].text;
 	const dob = formData["date-of-birth"].text;
 	const gen = formData["gender"].text; 
@@ -84,7 +85,8 @@ function createHeathRecord(formData) {
 	const bp = formData["blood-pressure"].text;
 	const mh = formData["medical-history"].text;    
 
-	core.setOutput("id", id);  	  
+	core.setOutput("id", id);  
+	core.setOutput("type", "create");  	
 	const readme = 
 `
 # ${id}
@@ -124,7 +126,7 @@ function createHeathRecord(formData) {
 | --- | --- | --- | --- | 
 
 
-# Treatements
+# Treatments
 
 | Id | Name | Start Date | End Date | Teatment Provider |  
 | --- | --- | --- | --- | -- |
