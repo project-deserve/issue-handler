@@ -37,6 +37,19 @@ try {
   core.setFailed(error.message);
 } 
 
+function getPrettyDate() {
+	const d = new Date();
+	return ("0" + d.getDate()).slice(-2) + "-" + ("0"+(d.getMonth()+1)).slice(-2) + "-" + d.getFullYear() + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+}
+
+function getFooter(now, cm, alg, info) {
+	return `| ${now}| ${cm}              | ${alg}    |  ${info}               | `
+}
+
+function calcBMI(hgt, wgt) {
+	let bmi = (wgt / (hgt ** 2)).toFixed(2);	
+	return bmi;
+}
 
 function updateHealthRecord(id, formData) {
 	const issueId = github.context.payload.issue.number;		
@@ -51,19 +64,27 @@ function updateHealthRecord(id, formData) {
 	const cdn = formData["medical-condition"].text;
 	const ill = formData["medical-illness"].text;
 	const wgt = formData["weight"].text;
+	const hgt = formData["height"].text;	
+	const bmi = calcBMI(hgt, wgt);
 	const bp = formData["blood-pressure"].text;
 	const gl = formData["glucose-level"].text;		
 	const bt = formData["body-temperature"].text;		
-	const info = formData["additional-information"].text;  	
+	const info = formData["additional-information"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>"); 
+	const cm = formData["current-medication"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>"); 
+	const alg = formData["allergies"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>");  
+ 	
 	const comm = `[video-conference](https://pade.chat:5443/ofmeet/${id}-${issueId})`;
 	
 	const md = `<a href="https://github.com/project-deserve/clinic-alpha-one/issues/${issueId}">${now}</a>`	
-	const visit = `| ${md} | ${rsn} | ${cdn} | ${ill} | ${wgt} | ${bp} | ${bt} | ${gl} | ${comm} |`;
+	const visit = `| ${md} | ${rsn} | ${cdn} | ${ill} | ${bmi} | ${hgt} | ${wgt} | ${bp} | ${bt} | ${gl} | ${comm} |`;
 	
-	const readme = healthRecord[0].substring(0, healthRecord[0].length - 2) + "\n" + visit + "\n## Illnesses" + healthRecord[1] + "\n" + now + "\n" + info;
-	core.setOutput("id", id);  	  
-	core.setOutput("type", "update");  	
+	const readme = healthRecord[0].substring(0, healthRecord[0].length - 2) + "\n" + visit + "\n## Illnesses" + healthRecord[1].substring(0, healthRecord[1].length - 2) + "\n" + getFooter(now, cm, alg, info);
 	fs.writeFileSync(fileName, readme);	
+
+	core.setOutput("id", id);  	  
+	core.setOutput("bmi", bmi);  	
+	core.setOutput("type", "update"); 
+	core.setOutput("dte", getPrettyDate()); 	 	
 }	
 
 function createHeathRecord(formData) {
@@ -80,19 +101,25 @@ function createHeathRecord(formData) {
 	const gen = formData["gender"].text; 
 	const wgt = formData["weight"].text;
 	const hgt = formData["height"].text;
+	const bmi = calcBMI(hgt, wgt);	
 	const bp = formData["blood-pressure"].text;
 	const gl = formData["glucose-level"].text;	
 	const bt = formData["body-temperature"].text;	
 	const rsn = formData["reason-for-the-appointment"].text;
 	const cdn = formData["medical-condition"].text;
 	const ill = formData["medical-illness"].text;	
-	const mh = formData["medical-history"].text;  
+	const info = formData["additional-information"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>"); 
+	const cm = formData["current-medication"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>"); 
+	const alg = formData["allergies"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>");  
+	
 	const comm = `[video-conference](https://pade.chat:5443/ofmeet/${id}-${issueId})`;	
 	const md = `<a href="https://github.com/project-deserve/clinic-alpha-one/issues/${issueId}">${now}</a>`	
 	
 	core.setOutput("id", id);  
+	core.setOutput("bmi", bmi);  	
 	core.setOutput("type", "create");  	
-	const readme = 
+	core.setOutput("dte", getPrettyDate()); 		
+	let readme = 
 `
 ![image](https://user-images.githubusercontent.com/110731/191966461-b80f054f-0bb3-41b5-b549-10c34c46387b.png)  
 Everyone deserves good health care
@@ -110,9 +137,9 @@ ${id}
 
 ## Visits
 [Book Appointment](https://github.com/project-deserve/clinic-alpha-one/issues/new?assignees=&labels=appointment&template=book-appointment.yml)
-| Date | Reason | Condition | Illness | Weight | Blood Pressure | Temperature | Glucose Level | Communication | 
-| ---- | ------ | --------- | ------- | ------ | -------------- | ----------- | ------------- | ------------- | 
-| ${md}| ${rsn} | ${cdn}    | ${ill}  | ${wgt} | ${bp}          | ${bt}       | ${gl}         | ${comm}       | 
+| Date | Reason | Condition | Illness | BMI    | Height | Weight | Blood Pressure | Temperature | Glucose Level | Communication | 
+| ---- | ------ | --------- | ------- | ------ | ------ | ------ | -------------- | ----------- | ------------- | ------------- | 
+| ${md}| ${rsn} | ${cdn}    | ${ill}  | ${bmi} | ${hgt} | ${wgt} | ${bp}          | ${bt}       | ${gl}         | ${comm}       | 
 
 ## Illnesses
 
@@ -126,30 +153,17 @@ ${id}
 | ---   | ---------- | -------- | ---------------- | 
 | ${cdn}| ${md}      |          |                  | 
 
-## Medications
-
-| Id  | Type | Start Date | Description | 
-| --- | ---- | ---------- | ----------- | 
-
-## Treatments
-
-| Id  | Name | Start Date | End Date | Teatment Provider | 
-| --- | ---- | ---------- | -------- | ----------------- | 
-
-## Activities
-
-| Id  | Type | Date | Time | Weight | Reps | Sets | Duration | Heart Rate | Calories Burned | 
-| --- | ---- | ---- | ---- | ------ | ---- | ---- | -------- | ---------- | --------------- | 
-
 ## Medical History
 
-${now}
-${mh}
+| Date  | Current Medication | Allergies | Additional Information | 
+| ----- | ------------------ | --------- | ---------------------- | 
+| ${now}| ${cm}              | ${alg}    |  ${info}               | 
 `
 
 	if (!fs.existsSync(dirName)){
 		fs.mkdirSync(dirName);
 	}
+	readme = readme + getFooter(now, cm, alg, info);
 	fs.writeFileSync(fileName, readme);	
 	
 	const rootReadme = "Personal Health Records/readme.md";
