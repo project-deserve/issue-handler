@@ -69,9 +69,9 @@ function updateHealthRecord(id, formData) {
 	const bp = formData["blood-pressure"].text;
 	const gl = formData["glucose-level"].text;		
 	const bt = formData["body-temperature"].text;		
-	const info = formData["additional-information"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>"); 
-	const cm = formData["current-medication"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>"); 
-	const alg = formData["allergies"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>");  
+	const info = formData["additional-information"].text; 
+	const cm = formData["current-medication"].text; 
+	const alg = formData["allergies"].text;  
  	
 	const comm = `[video-conference](https://pade.chat:5443/ofmeet/${id}-${issueId})`;
 	
@@ -108,9 +108,9 @@ function createHeathRecord(formData) {
 	const rsn = formData["reason-for-the-appointment"].text;
 	const cdn = formData["medical-condition"].text;
 	const ill = formData["medical-illness"].text;	
-	const info = formData["additional-information"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>"); 
-	const cm = formData["current-medication"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>"); 
-	const alg = formData["allergies"].text.replace("```", "").replace("markdown", "").replace("\n", "<br/>");  
+	const info = formData["additional-information"].text; 
+	const cm = formData["current-medication"].text; 
+	const alg = formData["allergies"].text;  
 	
 	const comm = `[video-conference](https://pade.chat:5443/ofmeet/${id}-${issueId})`;	
 	const md = `<a href="https://github.com/project-deserve/clinic-alpha-one/issues/${issueId}">${now}</a>`	
@@ -163,7 +163,7 @@ ${id}
 	if (!fs.existsSync(dirName)){
 		fs.mkdirSync(dirName);
 	}
-	readme = readme + getFooter(now, cm, alg, info);
+
 	fs.writeFileSync(fileName, readme);	
 	
 	const rootReadme = "Personal Health Records/readme.md";
